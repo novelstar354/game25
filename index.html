@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>GACHA</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="https://thumb.ac-illust.com/e7/e7835a3a4c0286f1d5c9420e877404f4_t.jpeg" sizes="16×16" type="image/png" /> 
 <style>
 body{margin:0;background:#020617;color:#fff;font-family:system-ui;text-align:center}
 button{padding:6px 12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
@@ -23,6 +24,15 @@ button{padding:6px 12px;border:none;border-radius:8px;font-weight:bold;cursor:po
 .done{background:#065f46}
 .today{background:#fde047;color:#000}
 .reward{background:#14532d;color:#bbf7d0;padding:8px;border-radius:10px;margin:8px}
+footer {
+           padding: 30px;
+           text-align: center;
+           font-size: 0.85rem;
+           color: rgba(255,255,255,0.5);
+           border-top: 1px solid rgba(255,255,255,0.1);
+           margin-top: 60px;
+       }
+       
 </style>
 </head>
 <body>
@@ -52,7 +62,9 @@ money:<span id="money"></span>円
 <button onclick="exportSave()">📤エクスポート</button>
 <button onclick="importSave()">📥インポート</button>
 <button onclick="resetSave()">🗑セーブ削除</button>
-
+<footer>
+       © 2025 STAR CORPORATION - All Rights Reserved.
+   </footer>
 <script>
 const SAVE_KEY="gacha_save_v4";
 

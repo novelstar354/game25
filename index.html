@@ -15,6 +15,8 @@ button{padding:6px 12px;border:none;border-radius:8px;font-weight:bold;cursor:po
 .SR{background:#7c3aed}
 .SSR{background:linear-gradient(135deg,#fde047,#f59e0b);color:#000}
 .SSSR{background:linear-gradient(135deg,#22d3ee,#a855f7,#fde047);color:#000;box-shadow:0 0 20px #a855f7}
+.SECRET{background:;color:#fff;box-shadow:0 0 20px #a855f7}
+.SECRET・R{background:;color:#fff;box-shadow:0 0 20px #a855f7}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
 .book-card{padding:10px;border-radius:10px;font-size:12px}
 .unknown{background:#020617;color:#64748b;border:1px dashed #334155}
@@ -48,10 +50,11 @@ money:<span id="money"></span>円
 <button onclick="pull1()">単発</button>
 <button onclick="pull10()">10連</button>
 <button onclick="paid10()">有償10連(SSR以上確定)</button>
+<button onclick="paid100()">有償100連(SSR以上確定)</button>
 <button onclick="openCalendar()">📅ログイン</button>
 <button onclick="openInv()">📦所持</button>
 <button onclick="openBook()">📖キャラ図鑑</button>
-
+    
 <div id="gacha" class="grid"></div>
 <div id="inv" class="hidden"></div>
 <div id="book" class="hidden"></div>
@@ -59,40 +62,84 @@ money:<span id="money"></span>円
 
 <hr>
 <button onclick="buyPaid()">💳 有償石購入</button>
+<button onclick="buypaid()">💳️ 10まとめ買い</button>
+<button onclick="buypaidbig()">💳️ 100まとめ買い</button>
 <button onclick="exportSave()">📤エクスポート</button>
 <button onclick="importSave()">📥インポート</button>
 <button onclick="resetSave()">🗑セーブ削除</button>
 <footer>
-       © 2025 GAMEHUB - All Rights Reserved.
+       © 2025 GAMEHUB - All Rights Reserved.Q
    </footer>
 <script>
 const SAVE_KEY="gacha_save_v4";
 
 const chars=[
-{id:1,name:"アルセーヌ",r:"N",sell:500},
+{id:1,name:"エンジェル",r:"N",sell:500},
 {id:2,name:"ピクシー",r:"N",sell:500},
+{id:19,name:"マンドレイク",r:"N",sell:500},
+{id:39,name:"バイコーン",r:"N",sell:500},
+{id:40,name:"ケルピー",r:"N",sell:500},
+{id:41,name:"アガシオン",r:"N",sell:500},
+{id:42,name:"アークエンジェル",r:"N",sell:500},
 {id:3,name:"モコイ",r:"R",sell:750},
 {id:4,name:"キンキ",r:"R",sell:750},
 {id:5,name:"デカラビア",r:"SR",sell:1500},
 {id:6,name:"ナーガラジャ",r:"SR",sell:1500},
-{id:7,name:"サタナエル",r:"SSSR",sell:5000},
-{id:8,name:"伊邪那岐大神",r:"SSSR",sell:5000},
-{id:9,name:"伊邪那岐大神・賊神",r:"SSSR",sell:5000},
+{id:17,name:"ファフニール",r:"SR",sell:1500},
 {id:10,name:"ラウール",r:"SSR",sell:3000},
 {id:11,name:"アステリオス",r:"SSR",sell:3000},
 {id:12,name:"ヨシツネ",r:"SSR",sell:3000},
 {id:13,name:"アリス",r:"SSR",sell:3000},
 {id:14,name:"サタン",r:"SSR",sell:3000},
+{id:15,name:"マダ",r:"SSR",sell:3000},
+{id:16,name:"オーディン",r:"SSR",sell:3000},
+{id:18,name:"メタトロン",r:"SSR",sell:3000},
+{id:7,name:"サタナエル",r:"SSSR",sell:7000},
+{id:8,name:"伊邪那岐大神",r:"SSSR",sell:7000},
+{id:9,name:"伊邪那岐大神・賊神",r:"SSSR",sell:10000},
+{id:20,name:"アルセーヌ",r:"SECRET",sell:9000},
+{id:21,name:"ゾロ",r:"SECRET",sell:9000},
+{id:22,name:"キャプテン・キッド",r:"SECRET",sell:9000},
+{id:23,name:"カルメン",r:"SECRET",sell:9000},
+{id:24,name:"ゴエモン",r:"SECRET",sell:9000},
+{id:25,name:"ヨハンナ",r:"SECRET",sell:9000},
+{id:26,name:"ミラディ",r:"SECRET",sell:9000},
+{id:27,name:"ロビンフッド",r:"SECRET",sell:9000},
+{id:28,name:"ロキ",r:"SECRET",sell:12000},
+{id:29,name:"サンドリヨン",r:"SECRET",sell:15000},
+{id:30,name:"ディエゴ",r:"SECRET・R",sell:9000},
+{id:31,name:"ウィリアム",r:"SECRET・R",sell:12000},
+{id:32,name:"セレスティーヌ",r:"SECRET・R",sell:12000},
+{id:33,name:"ゴロキチ",r:"SECRET・R",sell:12000},
+{id:34,name:"アグネス",r:"SECRET・R",sell:12000},
+{id:35,name:"ルーシー",r:"SECRET・R",sell:12000},
+{id:36,name:"ヘリワード",r:"SECRET・R",sell:12000},
+{id:37,name:"エラ",r:"SECRET・R",sell:20000},
+{id:38,name:"ヴァナディース",r:"SECRET・R",sell:15000},
 ];
 
-//{id:,name:"",r:"",sell:},
+/*
+
+43
+
+{id:,name:"",r:"N",sell:500},
+{id:,name:"",r:"R",sell:750},
+{id:,name:"",r:"SR",sell:1500},
+{id:,name:"",r:"SSR",sell:3000},
+{id:,name:"",r:"SSSR",sell:5000},
+{id:,name:"",r:"SECRET",sell:9000},
+{id:,name:"",r:"SECRET・R",sell:12000},
+
+*/
 
 const rate=[
-{r:"N",p:60},
-{r:"R",p:25},
+{r:"N",p:65.46},
+{r:"R",p:20},
 {r:"SR",p:10},
 {r:"SSR",p:4},
-{r:"SSSR",p:1},
+{r:"SSSR",p:0.50},
+{r:"SECRET",p:0.03},
+{r:"SECRET・R",p:0.01},
 ];
 
 function loadSave(){
@@ -191,7 +238,16 @@ const ssrOnly = chars.filter(c => c.r==="SSR" || c.r==="SSSR");
  show(res);
 }
 
-
+function paid100(){
+ if(save.paidStone<300000)return;
+ save.paidStone-=300000;
+    
+const ssrOnly = chars.filter(c => c.r==="SSR" || c.r==="SSSR");
+ const res=[ssrOnly[Math.floor(Math.random()*ssrOnly.length)]];
+ while(res.length<100)res.push(draw());
+ show(res);
+}
+    
 /* ===== 所持 ===== */
 function openInv(){
  let h="<h2>所持キャラ</h2><div class='grid'>";
@@ -242,6 +298,18 @@ function buyPaid(){
  save.money-=1000;
  save.paidStone+=1000;
  update();
+}
+function buypaid(){
+if(save.money<10000)return;
+save.money-=10000;
+save.paidStone+=11000;
+update();
+}
+function buypaidbig(){
+if(save.money<100000)return;
+save.money-=100000;
+save.paidStone+=130000;
+update();
 }
 function openCalendar(){
  let h="<div class='calendar'><div class='cal-grid'>";

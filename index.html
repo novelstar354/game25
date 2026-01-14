@@ -133,7 +133,8 @@ if(save.lastLogin!==today){
 
 /* ===== ガチャ ===== */
 function draw(){
- let r=Math.random()*100,sum=0;
+ const total = rate.reduce((a,b)=>a+b.p,0);
+ let r = Math.random()*total, sum=0;
  for(const x of rate){
   sum+=x.p;
   if(r<sum){
@@ -142,6 +143,7 @@ function draw(){
   }
  }
 }
+
 function checkBookReward(){
  const got=Object.keys(save.book).length;
  if(got===chars.length && !save.bookReward){
@@ -175,11 +177,13 @@ function pull10(){
 function paid10(){
  if(save.paidStone<3000)return;
  save.paidStone-=3000;
- const ssrPlus=chars.filter(c=>c.r==="SSR"||c.r==="SSSR");
- const res=[ssrPlus[Math.floor(Math.random()*ssrPlus.length)]];
+
+const ssrOnly = chars.filter(c => c.r==="SSR" || c.r==="SSSR");
+ const res=[ssrOnly[Math.floor(Math.random()*ssrOnly.length)]];
  while(res.length<10)res.push(draw());
  show(res);
 }
+
 
 /* ===== 所持 ===== */
 function openInv(){
@@ -207,7 +211,8 @@ function sell(id){
 /* ===== 図鑑 ===== */
 function openBook(){
  const got=Object.keys(save.book).length;
- const rateP=Math.floor(got/chars.length*100);
+const rateP=(got/chars.length*100).toFixed(1);
+
  let h=`
  <h2>キャラ図鑑</h2>
  <div>達成率：${rateP}%（${got}/${chars.length}）</div>

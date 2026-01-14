@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>GACHA</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;background:#020617;color:#fff;font-family:system-ui;text-align:center}
+button{padding:6px 12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
+.hidden{display:none}
+.card{padding:16px;border-radius:14px;margin:6px}
+.N{background:#334155}
+.R{background:#2563eb}
+.SR{background:#7c3aed}
+.SSR{background:linear-gradient(135deg,#fde047,#f59e0b);color:#000}
+.SSSR{background:linear-gradient(135deg,#22d3ee,#a855f7,#fde047);color:#000;box-shadow:0 0 20px #a855f7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.book-card{padding:10px;border-radius:10px;font-size:12px}
+.unknown{background:#020617;color:#64748b;border:1px dashed #334155}
+.calendar{background:#020617;padding:12px;border-radius:12px}
+.cal-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cal-day{background:#111827;padding:8px;border-radius:8px;font-size:11px}
+.done{background:#065f46}
+.today{background:#fde047;color:#000}
+.reward{background:#14532d;color:#bbf7d0;padding:8px;border-radius:10px;margin:8px}
+</style>
+</head>
+<body>
+
+<h1>GACHA</h1>
+
+<div>
+無償石:<span id="free"></span> /
+有償石:<span id="paid"></span> /
+money:<span id="money"></span>円
+</div>
+
+<button onclick="pull1()">単発</button>
+<button onclick="pull10()">10連</button>
+<button onclick="paid10()">有償10連(SSR以上確定)</button>
+<button onclick="openCalendar()">📅ログイン</button>
+<button onclick="openInv()">📦所持</button>
+<button onclick="openBook()">📖キャラ図鑑</button>
+
+<div id="gacha" class="grid"></div>
+<div id="inv" class="hidden"></div>
+<div id="book" class="hidden"></div>
+<div id="calendar" class="hidden"></div>
+
+<hr>
+<button onclick="buyPaid()">💳 有償石購入</button>
+<button onclick="exportSave()">📤エクスポート</button>
+<button onclick="importSave()">📥インポート</button>
+<button onclick="resetSave()">🗑セーブ削除</button>
+
+<script>
+const SAVE_KEY="gacha_save_v4";
+
+const chars=[
+{id:1,name:"アルセーヌ",r:"N",sell:500},
+{id:2,name:"ピクシー",r:"N",sell:500},
+{id:3,name:"モコイ",r:"R",sell:750},
+{id:4,name:"キンキ",r:"R",sell:750},
+{id:5,name:"デカラビア",r:"SR",sell:1500},
+{id:6,name:"ナーガラジャ",r:"SR",sell:1500},
+{id:7,name:"サタナエル",r:"SSR",sell:3000},
+{id:8,name:"伊邪那岐大神",r:"SSR",sell:3000},
+{id:9,name:"伊邪那岐大神・賊神",r:"SSSR",sell:5000},
+];
+
+const rate=[
+{r:"N",p:60},
+{r:"R",p:25},
+{r:"SR",p:10},
+{r:"SSR",p:4},
+{r:"SSSR",p:1},
+];
+
+function loadSave(){
+ const raw=localStorage.getItem(SAVE_KEY);
+ if(raw) return JSON.parse(raw);
+ return{
+  freeStone:5000,
+  paidStone:0,
+  money:10000,
+  owned:{},
+  book:{},
+  bookReward:false,
+  loginDay:0,
+  lastLogin:""
+ };
+}
+let save=loadSave();
+
+function clamp(){
+ save.freeStone=Math.max(0,save.freeStone);
+ save.paidStone=Math.max(0,save.paidStone);
+ save.money=Math.max(0,save.money);
+}
+function saveData(){
+ clamp();
+ localStorage.setItem(SAVE_KEY,JSON.stringify(save));
+}
+function update(){
+ free.textContent=save.freeStone;
+ paid.textContent=save.paidStone;
+ money.textContent=save.money;
+ saveData();
+}
+update();
+
+/* ===== ログイン ===== */
+const today=new Date().toDateString();
+const y=new Date(Date.now()-86400000).toDateString();
+if(save.lastLogin!==today){
+ save.loginDay=(save.lastLogin===y)?save.loginDay+1:1;
+ save.freeStone+=1000+(save.loginDay-1)*100;
+ save.lastLogin=today;
+ update();
+}
+
+/* ===== ガチャ ===== */
+function draw(){
+ let r=Math.random()*100,sum=0;
+ for(const x of rate){
+  sum+=x.p;
+  if(r<sum){
+   const pool=chars.filter(c=>c.r===x.r);
+   return pool[Math.floor(Math.random()*pool.length)];
+  }
+ }
+}
+function checkBookReward(){
+ const got=Object.keys(save.book).length;
+ if(got===chars.length && !save.bookReward){
+  save.bookReward=true;
+  save.freeStone+=10000;
+  alert("🎉 図鑑100%達成！\n無償石10000個を獲得しました！");
+ }
+}
+function show(list){
+ gacha.innerHTML="";
+ list.forEach(c=>{
+  gacha.innerHTML+=`<div class="card ${c.r}">${c.name}<br>${c.r}</div>`;
+  save.owned[c.id]=(save.owned[c.id]||0)+1;
+  if(!save.book[c.id]){
+   save.book[c.id]=true;
+   checkBookReward();
+  }
+ });
+ update();
+}
+function pull1(){
+ if(save.freeStone<300)return;
+ save.freeStone-=300;
+ show([draw()]);
+}
+function pull10(){
+ if(save.freeStone<3000)return;
+ save.freeStone-=3000;
+ show(Array.from({length:10},draw));
+}
+function paid10(){
+ if(save.paidStone<3000)return;
+ save.paidStone-=3000;
+ const ssrPlus=chars.filter(c=>c.r==="SSR"||c.r==="SSSR");
+ const res=[ssrPlus[Math.floor(Math.random()*ssrPlus.length)]];
+ while(res.length<10)res.push(draw());
+ show(res);
+}
+
+/* ===== 所持 ===== */
+function openInv(){
+ let h="<h2>所持キャラ</h2><div class='grid'>";
+ for(const c of chars){
+  const n=save.owned[c.id]||0;
+  if(n>0){
+   h+=`<div class="book-card ${c.r}">
+   ${c.name} x${n}<br>
+   <button onclick="sell(${c.id})">売却</button>
+   </div>`;
+  }
+ }
+ inv.innerHTML=h+"</div><button onclick='inv.classList.add(\"hidden\")'>戻る</button>";
+ inv.classList.remove("hidden");
+}
+function sell(id){
+ if(!save.owned[id])return;
+ save.owned[id]--;
+ save.money+=chars.find(c=>c.id===id).sell;
+ update();
+ openInv();
+}
+
+/* ===== 図鑑 ===== */
+function openBook(){
+ const got=Object.keys(save.book).length;
+ const rateP=Math.floor(got/chars.length*100);
+ let h=`
+ <h2>キャラ図鑑</h2>
+ <div>達成率：${rateP}%（${got}/${chars.length}）</div>
+ ${rateP===100?'<div class="reward">🎉 図鑑コンプリート達成！</div>':""}
+ <br><div class='grid'>`;
+ for(const c of chars){
+  if(save.book[c.id]){
+   h+=`<div class="book-card ${c.r}">${c.name}<br>${c.r}</div>`;
+  }else{
+   h+=`<div class="book-card unknown">？？？<br>${c.r}</div>`;
+  }
+ }
+ book.innerHTML=h+"</div><button onclick='book.classList.add(\"hidden\")'>戻る</button>";
+ book.classList.remove("hidden");
+}
+
+/* ===== その他 ===== */
+function buyPaid(){
+ if(save.money<1000)return;
+ save.money-=1000;
+ save.paidStone+=1000;
+ update();
+}
+function openCalendar(){
+ let h="<div class='calendar'><div class='cal-grid'>";
+ for(let i=1;i<=30;i++){
+  let cls="cal-day";
+  if(i<save.loginDay)cls+=" done";
+  else if(i===save.loginDay)cls+=" today";
+  h+=`<div class="${cls}">${i}日<br>${1000+(i-1)*100}</div>`;
+ }
+ calendar.innerHTML=h+"</div><button onclick='calendar.classList.add(\"hidden\")'>閉じる</button></div>";
+ calendar.classList.remove("hidden");
+}
+function exportSave(){
+ prompt("コピーしてください",btoa(JSON.stringify(save)));
+}
+function importSave(){
+ const t=prompt("貼り付け");
+ if(!t)return;
+ try{save=JSON.parse(atob(t));update();}
+ catch{alert("失敗");}
+}
+function resetSave(){
+ if(confirm("削除しますか？")){
+  localStorage.removeItem(SAVE_KEY);
+  location.reload();
+ }
+}
+</script>
+</body>
+</html>
